@@ -12,15 +12,19 @@ import CoreData
 class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
+    
+    var seletedCategory : Category? {
+        didSet{
+            loadItems()
+        }
+    }
  
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
  
     override func viewDidLoad() {
         super.viewDidLoad()
         
-
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
-        
         
         loadItems()
         
@@ -52,12 +56,6 @@ class TodoListViewController: UITableViewController {
 //MARK: - TableView Delagate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        //for Update Item in CRUD
-    //    itemArray[indexPath.row].setValue("Completed", forKeyPath: "title")
-   
-    // For delete item in CRUD
-       // context.delete(itemArray[indexPath.row])
-        // itemArray.remove(at: indexPath.row)
         
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
