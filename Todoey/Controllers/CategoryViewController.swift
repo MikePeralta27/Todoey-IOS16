@@ -13,17 +13,17 @@ class CategoryViewController: UITableViewController {
     
     var categories = [`Category`]()
     
+    // Context for comunicate with the persistent container con CRUD de data
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        loadCategories()
     }
 
- 
-    
-    
     //MARK: - TableView Datasource Methods
+    
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return categories.count
