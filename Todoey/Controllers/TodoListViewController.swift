@@ -12,18 +12,23 @@ import CoreData
 class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
- 
+    
+    var seletedCategory : Category? {
+        
+        //What should happends when a variable get set with a new value
+        didSet{
+            loadItems()
+        }
+    }
+ // Accesing to a singleton to tap in the persistent container in the App delegate data lazy variable
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
  
     override func viewDidLoad() {
         super.viewDidLoad()
         
-
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
-        
-        loadItems()
-        
+     
     }
     
 
@@ -52,12 +57,6 @@ class TodoListViewController: UITableViewController {
 //MARK: - TableView Delagate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        //for Update Item in CRUD
-    //    itemArray[indexPath.row].setValue("Completed", forKeyPath: "title")
-   
-    // For delete item in CRUD
-       // context.delete(itemArray[indexPath.row])
-        // itemArray.remove(at: indexPath.row)
         
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
@@ -84,12 +83,13 @@ class TodoListViewController: UITableViewController {
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             //What will happends once the users click the add itme button on uur uiAlert
             
-            
+            // Create Update Read Destroid Data using Context
             let newItem = Item(context: self.context)
             newItem.title = textField.text!
             newItem.done = false
+            newItem.parentCategory = self.seletedCategory
             self.itemArray.append(newItem)
-            
+            //
             self.saveItems()
         }
         
@@ -101,6 +101,7 @@ class TodoListViewController: UITableViewController {
         alert.addAction(action)
         
         present(alert, animated: true, completion: nil)
+       // alert.dismiss(animated: <#T##Bool#>)
     }
     
     //MARK: - Model Manupulation Methods
@@ -109,6 +110,7 @@ class TodoListViewController: UITableViewController {
         
     
         do{
+            // commit the actual state of context to persistent container
            try context.save()
         } catch{
             print("Error saving Context \(error)")
@@ -118,8 +120,16 @@ class TodoListViewController: UITableViewController {
         self.tableView.reloadData()
     }
     
-    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest() ) {
-       
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil) {
+        
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", seletedCategory!.name!)
+        
+        if let additionalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
+        
         do {
             itemArray = try context.fetch(request)
         } catch {
@@ -131,18 +141,18 @@ class TodoListViewController: UITableViewController {
     
     
 }
-
+// Extension to separate funtionaltities
 //MARK: - Search Bar Methods
 extension TodoListViewController: UISearchBarDelegate{
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         let request: NSFetchRequest<Item> = Item.fetchRequest()
         
-        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
         
         request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
         
-        loadItems(with: request)
+        loadItems(with: request, predicate: predicate)
 
     }
     
